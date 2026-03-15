@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/assets/fonts/BricolageGrotesque.woff2') format('woff2');
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/assets/fonts/Satoshi.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --background: 0.07 0.015 258;
+    --foreground: 0.95 0.008 258;
+    --card: 0.11 0.012 258;
+    --card-foreground: 0.95 0.008 258;
+    --popover: 0.11 0.012 258;
+    --popover-foreground: 0.95 0.008 258;
+    --primary: 0.58 0.22 22;
+    --primary-foreground: 0.98 0.005 258;
+    --secondary: 0.16 0.012 258;
+    --secondary-foreground: 0.85 0.01 258;
+    --muted: 0.15 0.01 258;
+    --muted-foreground: 0.55 0.015 258;
+    --accent: 0.58 0.22 22;
+    --accent-foreground: 0.98 0.005 258;
+    --destructive: 0.55 0.22 22;
+    --destructive-foreground: 0.98 0.005 258;
+    --border: 0.2 0.015 258;
+    --input: 0.18 0.015 258;
+    --ring: 0.58 0.22 22;
+    --radius: 0.5rem;
+    --chart-1: 0.58 0.22 22;
+    --chart-2: 0.65 0.18 200;
+    --chart-3: 0.7 0.15 150;
+    --chart-4: 0.6 0.2 280;
+    --chart-5: 0.75 0.12 60;
+    --sidebar: 0.1 0.012 258;
+    --sidebar-foreground: 0.95 0.008 258;
+    --sidebar-primary: 0.58 0.22 22;
+    --sidebar-primary-foreground: 0.98 0.005 258;
+    --sidebar-accent: 0.15 0.01 258;
+    --sidebar-accent-foreground: 0.85 0.01 258;
+    --sidebar-border: 0.2 0.015 258;
+    --sidebar-ring: 0.58 0.22 22;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Horizontal scroll row */
+.scroll-row {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 0.5rem;
+}
+.scroll-row::-webkit-scrollbar {
+  display: none;
+}
+.scroll-row > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Gradient overlay for hero */
+.hero-gradient {
+  background: linear-gradient(
+    to right,
+    oklch(0.07 0.015 258 / 0.95) 30%,
+    oklch(0.07 0.015 258 / 0.6) 60%,
+    oklch(0.07 0.015 258 / 0.1) 100%
+  ), linear-gradient(
+    to top,
+    oklch(0.07 0.015 258 / 1) 0%,
+    transparent 40%
+  );
+}
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.15 0.01 258) 25%,
+    oklch(0.2 0.015 258) 50%,
+    oklch(0.15 0.01 258) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid oklch(var(--ring));
+  outline-offset: 2px;
+}
