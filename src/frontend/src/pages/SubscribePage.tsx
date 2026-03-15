@@ -3,7 +3,6 @@ import { Check, Crown, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import LoginPrompt from "../components/LoginPrompt";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useIsPremium, useIsStripeConfigured } from "../hooks/useQueries";
@@ -16,12 +15,13 @@ const FEATURES = [
 ];
 
 export default function SubscribePage() {
-  const { identity } = useInternetIdentity();
+  const { identity, login, isLoggingIn } = useInternetIdentity();
   const { data: isPremium } = useIsPremium();
   const { data: stripeConfigured } = useIsStripeConfigured();
   const { actor } = useActor();
   const [isLoading, setIsLoading] = useState(false);
   const [sessionStatus, setSessionStatus] = useState<string | null>(null);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
 
   // Handle Stripe redirect back
   useEffect(() => {
@@ -40,11 +40,17 @@ export default function SubscribePage() {
     }
   }, [actor]);
 
-  const handleSubscribe = async () => {
-    if (!actor) {
-      toast.error("Please sign in first");
-      return;
+  // Once logged in after pending checkout, auto-start checkout
+  useEffect(() => {
+    if (pendingCheckout && identity && actor) {
+      setPendingCheckout(false);
+      startCheckout();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity, actor, pendingCheckout]);
+
+  const startCheckout = async () => {
+    if (!actor) return;
     if (!stripeConfigured) {
       toast.error(
         "Payment is not configured yet. Please contact the administrator.",
@@ -53,8 +59,8 @@ export default function SubscribePage() {
     }
     setIsLoading(true);
     try {
-      const successUrl = `${window.location.origin}/subscribe?session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${window.location.origin}/subscribe`;
+      const successUrl = `${window.location.origin}/#/subscribe?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${window.location.origin}/#/subscribe`;
       const url = await actor.createCheckoutSession(
         [
           {
@@ -76,13 +82,18 @@ export default function SubscribePage() {
     }
   };
 
-  if (!identity) {
-    return (
-      <div className="pt-16">
-        <LoginPrompt message="Sign in to subscribe to Ozone TV Premium" />
-      </div>
-    );
-  }
+  const handleSubscribe = async () => {
+    if (!identity) {
+      // Not logged in — trigger login, then auto-proceed to checkout
+      setPendingCheckout(true);
+      login();
+      return;
+    }
+    await startCheckout();
+  };
+
+  const isButtonBusy =
+    isLoading || isLoggingIn || (pendingCheckout && !identity);
 
   return (
     <div className="pt-24 pb-16 px-4">
@@ -158,20 +169,28 @@ export default function SubscribePage() {
                 size="lg"
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow font-semibold text-base"
                 onClick={handleSubscribe}
-                disabled={isLoading}
+                disabled={isButtonBusy}
                 data-ocid="subscribe.primary_button"
               >
-                {isLoading ? (
+                {isButtonBusy ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
-                    Processing...
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isLoggingIn || pendingCheckout
+                      ? "Signing in..."
+                      : "Processing..."}
                   </>
                 ) : (
                   <>
-                    <Crown className="w-4 h-4 mr-2" /> Subscribe Now
+                    <Crown className="w-4 h-4 mr-2" /> Subscribe Now — $9.99/mo
                   </>
                 )}
               </Button>
+
+              {!identity && (
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  You&apos;ll sign in quickly, then go straight to payment.
+                </p>
+              )}
 
               {!stripeConfigured && (
                 <p className="text-xs text-muted-foreground text-center mt-3">

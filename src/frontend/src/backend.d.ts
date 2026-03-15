@@ -23,6 +23,8 @@ export interface http_header {
     name: string;
 }
 export interface UserProfile {
+    name: string;
+    phone: string;
     favorites: Array<string>;
     watchHistory: Array<string>;
     subscriptionStatus: boolean;
@@ -73,6 +75,7 @@ export interface backendInterface {
     addFavorite(videoId: string): Promise<void>;
     addVideo(video: Video): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    claimFirstAdmin(): Promise<boolean>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     deleteVideo(videoId: string): Promise<void>;
     filterByCategory(category: string): Promise<Array<Video>>;

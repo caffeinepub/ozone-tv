@@ -19,7 +19,6 @@ import MixinStorage "blob-storage/Mixin";
 
 actor {
   let videos = Map.empty<Text, Video>();
-  let userProfiles = Map.empty<Principal, UserProfile>();
   var stripeConfig : ?Stripe.StripeConfiguration = null;
   let accessControlState = AccessControl.initState();
 
@@ -38,10 +37,45 @@ actor {
     views : Nat;
   };
 
-  public type UserProfile = {
+  // Old profile type for stable memory compatibility during migration
+  type UserProfileV1 = {
     watchHistory : [Text];
     favorites : [Text];
     subscriptionStatus : Bool;
+  };
+
+  // New profile type with name and phone
+  public type UserProfile = {
+    name : Text;
+    phone : Text;
+    watchHistory : [Text];
+    favorites : [Text];
+    subscriptionStatus : Bool;
+  };
+
+  // Legacy stable variable — keeps old name so existing stable memory deserializes correctly
+  let userProfiles = Map.empty<Principal, UserProfileV1>();
+
+  // New stable variable with updated type
+  let userProfilesV2 = Map.empty<Principal, UserProfile>();
+
+  // Migrate old profiles into new map on upgrade
+  system func postupgrade() {
+    for ((principal, old) in userProfiles.entries()) {
+      // Only migrate if not already present in v2
+      switch (userProfilesV2.get(principal)) {
+        case (null) {
+          userProfilesV2.add(principal, {
+            name = "";
+            phone = "";
+            watchHistory = old.watchHistory;
+            favorites = old.favorites;
+            subscriptionStatus = old.subscriptionStatus;
+          });
+        };
+        case (?_) {};
+      };
+    };
   };
 
   module Video {
@@ -64,32 +98,27 @@ actor {
     if (not profile.watchHistory.any(func(id) { id == videoId })) {
       let historyList = List.fromArray(profile.watchHistory);
       historyList.add(videoId);
-      let updatedProfile = {
-        profile with
-        watchHistory = historyList.toArray();
-      };
-      userProfiles.add(caller, updatedProfile);
+      userProfilesV2.add(caller, { profile with watchHistory = historyList.toArray() });
     };
   };
 
   func getProfile(caller : Principal) : UserProfile {
-    switch (userProfiles.get(caller)) {
+    switch (userProfilesV2.get(caller)) {
       case (null) {
         let newProfile = {
+          name = "";
+          phone = "";
           watchHistory = [];
           favorites = [];
           subscriptionStatus = false;
         };
-        userProfiles.add(caller, newProfile);
+        userProfilesV2.add(caller, newProfile);
         newProfile;
       };
       case (?profile) { profile };
     };
   };
 
-  // Public: Claim admin if no admin is assigned yet.
-  // Returns true if the caller became admin, false if admin was already set.
-  // This allows the first user to log in to always become admin.
   public shared ({ caller }) func claimFirstAdmin() : async Bool {
     if (caller.isAnonymous()) { return false };
     if (not accessControlState.adminAssigned) {
@@ -100,29 +129,27 @@ actor {
     return false;
   };
 
-  // Required profile management functions
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");
     };
-    userProfiles.get(caller);
+    userProfilesV2.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
-    userProfiles.get(user);
+    userProfilesV2.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
-    userProfiles.add(caller, profile);
+    userProfilesV2.add(caller, profile);
   };
 
-  // Admin-only: Add video
   public shared ({ caller }) func addVideo(video : Video) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can add videos");
@@ -130,7 +157,6 @@ actor {
     videos.add(video.id, video);
   };
 
-  // Admin-only: Update video
   public shared ({ caller }) func updateVideo(video : Video) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can update videos");
@@ -138,7 +164,6 @@ actor {
     videos.add(video.id, video);
   };
 
-  // Admin-only: Delete video
   public shared ({ caller }) func deleteVideo(videoId : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can delete videos");
@@ -146,7 +171,6 @@ actor {
     videos.remove(videoId);
   };
 
-  // Public: Get all videos (guests can see non-premium videos)
   public query ({ caller }) func getAllVideos() : async [Video] {
     let isPremiumUser = AccessControl.isAdmin(accessControlState, caller) or getProfile(caller).subscriptionStatus;
     videos.values().toArray().filter(
@@ -156,7 +180,6 @@ actor {
     ).sort();
   };
 
-  // Public: Search videos
   public query ({ caller }) func searchVideos(keyword : Text) : async [Video] {
     let isPremiumUser = AccessControl.isAdmin(accessControlState, caller) or getProfile(caller).subscriptionStatus;
     videos.values().toArray().filter(
@@ -166,7 +189,6 @@ actor {
     );
   };
 
-  // Public: Filter by category
   public query ({ caller }) func filterByCategory(category : Text) : async [Video] {
     let isPremiumUser = AccessControl.isAdmin(accessControlState, caller) or getProfile(caller).subscriptionStatus;
     videos.values().toArray().filter(
@@ -176,7 +198,6 @@ actor {
     );
   };
 
-  // User-only: View a video
   public shared ({ caller }) func viewVideo(videoId : Text) : async Video {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view videos");
@@ -195,7 +216,6 @@ actor {
     };
   };
 
-  // User-only: Add favorite
   public shared ({ caller }) func addFavorite(videoId : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can add favorites");
@@ -204,21 +224,19 @@ actor {
     if (not profile.favorites.any(func(id) { id == videoId })) {
       let favoritesList = List.fromArray(profile.favorites);
       favoritesList.add(videoId);
-      userProfiles.add(caller, { profile with favorites = favoritesList.toArray() });
+      userProfilesV2.add(caller, { profile with favorites = favoritesList.toArray() });
     };
   };
 
-  // User-only: Remove favorite
   public shared ({ caller }) func removeFavorite(videoId : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can remove favorites");
     };
     let profile = getProfile(caller);
     let filteredFavorites = profile.favorites.filter(func(id) { id != videoId });
-    userProfiles.add(caller, { profile with favorites = filteredFavorites });
+    userProfilesV2.add(caller, { profile with favorites = filteredFavorites });
   };
 
-  // User-only: Get favorites
   public query ({ caller }) func getFavorites() : async [Text] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view favorites");
@@ -226,7 +244,6 @@ actor {
     getProfile(caller).favorites;
   };
 
-  // User-only: Get watch history
   public query ({ caller }) func getWatchHistory() : async [Text] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view watch history");
@@ -234,7 +251,6 @@ actor {
     getProfile(caller).watchHistory;
   };
 
-  // User-only: Check premium status
   public query ({ caller }) func isPremium() : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can check premium status");
@@ -242,12 +258,10 @@ actor {
     getProfile(caller).subscriptionStatus;
   };
 
-  // Public: Check if Stripe is configured
   public query func isStripeConfigured() : async Bool {
     stripeConfig != null;
   };
 
-  // Admin-only: Set Stripe configuration
   public shared ({ caller }) func setStripeConfiguration(config : Stripe.StripeConfiguration) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can configure Stripe");
@@ -262,7 +276,6 @@ actor {
     };
   };
 
-  // User-only: Create Stripe checkout session
   public shared ({ caller }) func createCheckoutSession(items : [Stripe.ShoppingItem], successUrl : Text, cancelUrl : Text) : async Text {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can start checkout");
@@ -270,42 +283,36 @@ actor {
     await Stripe.createCheckoutSession(getStripeConfiguration(), caller, items, successUrl, cancelUrl, transform);
   };
 
-  // Public: Get Stripe session status
   public func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
     await Stripe.getSessionStatus(getStripeConfiguration(), sessionId, transform);
   };
 
-  // Public: Transform function for HTTP outcalls
   public query func transform(input : OutCall.TransformationInput) : async OutCall.TransformationOutput {
     OutCall.transform(input);
   };
 
-  // Admin-only: Mark user as premium
   public shared ({ caller }) func markPremium(user : Principal) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can mark users as premium");
     };
     let profile = getProfile(user);
-    userProfiles.add(user, { profile with subscriptionStatus = true });
+    userProfilesV2.add(user, { profile with subscriptionStatus = true });
   };
 
-  // Admin-only: Get total users
   public query ({ caller }) func getTotalUsers() : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view analytics");
     };
-    userProfiles.size();
+    userProfilesV2.size();
   };
 
-  // Admin-only: Get subscriber count
   public query ({ caller }) func getSubscriberCount() : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view analytics");
     };
-    userProfiles.values().toArray().filter(func(p) { p.subscriptionStatus }).size();
+    userProfilesV2.values().toArray().filter(func(p) { p.subscriptionStatus }).size();
   };
 
-  // Admin-only: Get video analytics
   public query ({ caller }) func getVideoAnalytics() : async [(Text, Nat)] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view analytics");
