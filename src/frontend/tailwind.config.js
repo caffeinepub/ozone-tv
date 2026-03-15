@@ -79,8 +79,8 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
-        glow: "0 0 20px oklch(0.58 0.22 22 / 0.4)",
-        "glow-sm": "0 0 10px oklch(0.58 0.22 22 / 0.3)",
+        glow: "0 0 20px oklch(0.58 0.22 22 / 0.2)",
+        "glow-sm": "0 0 10px oklch(0.58 0.22 22 / 0.15)",
       },
       keyframes: {
         "accordion-down": {

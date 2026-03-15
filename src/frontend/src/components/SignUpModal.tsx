@@ -129,12 +129,6 @@ export default function SignUpModal({ onClose }: SignUpModalProps) {
         onClick={step !== 3 ? onClose : undefined}
       />
 
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/3 left-1/2 -translate-x-1/2 w-2/3 h-2/3 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 rounded-full bg-primary/5 blur-3xl" />
-      </div>
-
       {/* Modal card */}
       <motion.div
         className="relative z-10 w-full max-w-md mx-4"
@@ -147,7 +141,7 @@ export default function SignUpModal({ onClose }: SignUpModalProps) {
           {/* Header */}
           <div className="px-8 pt-8 pb-6 border-b border-border/40">
             <div className="flex items-center justify-center gap-2.5 mb-6">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-glow-sm">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                 <Tv className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="font-display font-bold text-xl tracking-tight text-foreground">

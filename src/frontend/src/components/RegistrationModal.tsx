@@ -47,12 +47,6 @@ export default function RegistrationModal({
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm"
       data-ocid="registration.modal"
     >
-      {/* Background atmosphere */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/4 -left-1/4 w-3/4 h-3/4 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 rounded-full bg-primary/8 blur-3xl" />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 32, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
