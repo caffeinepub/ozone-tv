@@ -15,7 +15,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Tv,
   User,
   X,
 } from "lucide-react";
@@ -79,24 +78,28 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 flex-shrink-0 mr-4"
+            className="flex items-center flex-shrink-0 mr-6"
             data-ocid="nav.link"
           >
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-glow-sm">
-              <Tv className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-xl tracking-tight text-foreground block">
-              Ozone<span className="text-primary">TV</span>
-            </span>
+            <img
+              src="/assets/generated/ozone-tv-logo-transparent.dim_512x512.png"
+              alt="Ozone TV"
+              className="h-10 w-auto object-contain"
+              style={{
+                maxWidth: "160px",
+                filter:
+                  "brightness(1.9) contrast(1.2) saturate(1.1) drop-shadow(0 0 6px rgba(120,80,255,0.35))",
+              }}
+            />
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1 flex-1">
+          <div className="hidden md:flex items-center gap-0.5 flex-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.path}
                 to={link.path as "/"}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium tracking-wide font-body transition-colors ${
                   currentPath === link.path
                     ? "text-foreground bg-muted"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -110,7 +113,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all"
+                className="ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold font-display tracking-widest bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25 hover:border-primary/50 transition-all"
                 data-ocid="nav.admin.link"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
@@ -129,7 +132,7 @@ export default function Navbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search videos..."
-                  className="w-48 md:w-64 h-8 bg-muted/50 border-border text-sm"
+                  className="w-48 md:w-64 h-8 bg-muted/50 border-border text-sm font-body"
                   data-ocid="nav.search_input"
                 />
                 <Button
@@ -174,7 +177,7 @@ export default function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link
                       to="/profile"
-                      className="cursor-pointer"
+                      className="cursor-pointer font-body"
                       data-ocid="nav.profile.link"
                     >
                       <User className="w-4 h-4 mr-2" /> Profile
@@ -183,7 +186,7 @@ export default function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link
                       to="/subscribe"
-                      className="cursor-pointer"
+                      className="cursor-pointer font-body"
                       data-ocid="nav.subscribe.link"
                     >
                       <Crown className="w-4 h-4 mr-2" /> Subscribe
@@ -195,7 +198,7 @@ export default function Navbar() {
                       <DropdownMenuItem asChild>
                         <Link
                           to="/admin"
-                          className="cursor-pointer"
+                          className="cursor-pointer font-body"
                           data-ocid="nav.admin.link"
                         >
                           <Settings className="w-4 h-4 mr-2" /> Admin
@@ -206,7 +209,7 @@ export default function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={clear}
-                    className="text-destructive cursor-pointer"
+                    className="text-destructive cursor-pointer font-body"
                     data-ocid="nav.logout.button"
                   >
                     <LogOut className="w-4 h-4 mr-2" /> Logout
@@ -216,7 +219,7 @@ export default function Navbar() {
             ) : (
               <Button
                 size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow-sm font-display text-xs tracking-widest"
                 onClick={() => setShowSignUp(true)}
                 data-ocid="nav.primary_button"
               >
@@ -248,7 +251,7 @@ export default function Navbar() {
               <Link
                 key={link.path}
                 to={link.path as "/"}
-                className="block py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="block py-2.5 text-sm font-medium font-body text-muted-foreground hover:text-foreground"
                 onClick={() => setMobileOpen(false)}
                 data-ocid="nav.link"
               >
@@ -258,7 +261,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="flex items-center gap-2 py-2.5 text-sm font-semibold text-primary"
+                className="flex items-center gap-2 py-2.5 text-xs font-semibold font-display tracking-widest text-primary"
                 onClick={() => setMobileOpen(false)}
                 data-ocid="nav.admin.link"
               >
