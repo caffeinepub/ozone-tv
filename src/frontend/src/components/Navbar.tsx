@@ -19,7 +19,6 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import ozoneLogoSrc from "/assets/uploads/image-1-1.png";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useIsAdmin } from "../hooks/useQueries";
 import SignUpModal from "./SignUpModal";
@@ -75,22 +74,27 @@ export default function Navbar() {
           className="absolute inset-0 bg-gradient-to-b from-background/95 to-background/0"
           style={{ backdropFilter: "blur(8px)" }}
         />
-        <nav className="relative flex items-center gap-4 px-4 md:px-10 h-16">
-          {/* Logo */}
+        <nav
+          className="relative flex items-center gap-4 px-4 md:px-10 h-18"
+          style={{ height: 72 }}
+        >
           <Link
             to="/"
             className="flex items-center flex-shrink-0 mr-8"
             data-ocid="nav.link"
           >
             <img
-              src={ozoneLogoSrc}
+              src="/assets/generated/ozone-tv-legal-logo.dim_800x200.png"
               alt="Ozone TV"
-              className="h-9 w-auto object-contain"
-              style={{ filter: "brightness(1.2)", maxHeight: "36px" }}
+              style={{
+                height: 52,
+                width: "auto",
+                objectFit: "contain",
+                display: "block",
+              }}
             />
           </Link>
 
-          {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1 flex-1">
             {NAV_LINKS.map((link) => (
               <Link
@@ -106,7 +110,6 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-
             {isAdmin && (
               <Link
                 to="/admin"
@@ -119,9 +122,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Right side */}
           <div className="flex items-center gap-3 ml-auto">
-            {/* Search */}
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center gap-2">
                 <Input
@@ -154,7 +155,6 @@ export default function Navbar() {
               </Button>
             )}
 
-            {/* User menu or Sign In */}
             {identity ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -224,7 +224,6 @@ export default function Navbar() {
               </Button>
             )}
 
-            {/* Mobile menu toggle */}
             <Button
               variant="ghost"
               size="icon"
@@ -241,7 +240,6 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden bg-card/95 border-b border-border px-4 pb-4 backdrop-blur-md">
             {NAV_LINKS.map((link) => (
