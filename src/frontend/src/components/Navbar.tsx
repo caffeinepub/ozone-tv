@@ -85,8 +85,8 @@ export default function Navbar() {
             <img
               src={ozoneLogoSrc}
               alt="Ozone TV"
-              className="h-8 w-auto object-contain"
-              style={{ filter: "brightness(1.1)" }}
+              className="h-9 w-auto object-contain"
+              style={{ filter: "brightness(1.2)", maxHeight: "36px" }}
             />
           </Link>
 
